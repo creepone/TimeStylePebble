@@ -14,6 +14,7 @@ GDrawCommandImage* dateImage;
 GDrawCommandImage* disconnectImage;
 GDrawCommandImage* batteryImage;
 GDrawCommandImage* batteryChargeImage;
+GBitmap *timerImage;
 
 // fonts
 GFont smSidebarFont;
@@ -88,6 +89,10 @@ void Beats_draw(GContext* ctx, int yPosition);
   void HeartRate_draw(GContext* ctx, int yPosition);
 #endif
 
+SidebarWidget timerWidget;
+int Timer_getHeight();
+void Timer_draw(GContext* ctx, int yPosition);
+
 void SidebarWidgets_init() {
   // load fonts
   smSidebarFont = fonts_get_system_font(FONT_KEY_GOTHIC_14_BOLD);
@@ -99,6 +104,7 @@ void SidebarWidgets_init() {
   disconnectImage = gdraw_command_image_create_with_resource(RESOURCE_ID_DISCONNECTED);
   batteryImage = gdraw_command_image_create_with_resource(RESOURCE_ID_BATTERY_BG);
   batteryChargeImage = gdraw_command_image_create_with_resource(RESOURCE_ID_BATTERY_CHARGE);
+  timerImage = gbitmap_create_with_resource(RESOURCE_ID_TIMER_ICON);
 
   #ifdef PBL_HEALTH
     sleepImage = gdraw_command_image_create_with_resource(RESOURCE_ID_HEALTH_SLEEP);
@@ -145,6 +151,8 @@ void SidebarWidgets_init() {
   beatsWidget.getHeight = Beats_getHeight;
   beatsWidget.draw      = Beats_draw;
 
+  timerWidget.getHeight = Timer_getHeight;
+  timerWidget.draw = Timer_draw;
 }
 
 void SidebarWidgets_deinit() {
@@ -152,6 +160,7 @@ void SidebarWidgets_deinit() {
   gdraw_command_image_destroy(disconnectImage);
   gdraw_command_image_destroy(batteryImage);
   gdraw_command_image_destroy(batteryChargeImage);
+  gbitmap_destroy(timerImage);
 
   #ifdef PBL_HEALTH
     gdraw_command_image_destroy(stepsImage);
@@ -268,6 +277,8 @@ SidebarWidget getSidebarWidgetByType(SidebarWidgetType type) {
     #endif
     case BEATS:
       return beatsWidget;
+    case TIMER:
+      return timerWidget;
     default:
       return emptyWidget;
       break;
@@ -902,4 +913,21 @@ void Beats_draw(GContext* ctx, int yPosition) {
                      GTextOverflowModeFill,
                      GTextAlignmentCenter,
                      NULL);
+}
+
+/***** Timer widget *****/
+
+int Timer_getHeight() {
+  return 48;
+}
+
+void Timer_draw(GContext* ctx, int yPosition) {
+  graphics_context_set_fill_color(ctx, GColorVividCerulean);
+  graphics_fill_rect(ctx, GRect(SidebarWidgets_xOffset, yPosition, 30, 48), 0, GCornerNone);
+  graphics_context_set_compositing_mode(ctx, GCompOpSet);
+  graphics_draw_bitmap_in_rect(ctx, timerImage, GRect(SidebarWidgets_xOffset + 3, yPosition + 12, 24, 24));
+
+  graphics_context_set_stroke_color(ctx, GColorBlack);
+  graphics_draw_line(ctx, GPoint(SidebarWidgets_xOffset, yPosition), GPoint(SidebarWidgets_xOffset + 30, yPosition));
+  graphics_draw_line(ctx, GPoint(SidebarWidgets_xOffset, yPosition + 48), GPoint(SidebarWidgets_xOffset + 30, yPosition + 48));
 }

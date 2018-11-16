@@ -4,6 +4,7 @@
 #include <pebble-fctx/ffont.h>
 #include "clock_area.h"
 #include "settings.h"
+#include "timer.h"
 
 #define ROUND_VERTICAL_PADDING 15
 
@@ -56,13 +57,17 @@ void update_clock_area_layer(Layer *l, GContext* ctx) {
     bounds = GRect(0, ROUND_VERTICAL_PADDING, screen_rect.size.w, screen_rect.size.h - ROUND_VERTICAL_PADDING * 2);
   #endif
 
+  bool timer_running_full = timer_is_running() && bounds.size.h >= 130;
+  if (timer_running_full) {
+    bounds.size.h -= 48;
+  }
+
   // initialize FCTX, the fancy 3rd party drawing library that all the cool kids use
   FContext fctx;
 
   fctx_init_context(&fctx, ctx);
   fctx_set_color_bias(&fctx, 0);
   fctx_set_fill_color(&fctx, globalSettings.timeColor);
-
 
   // calculate font size
   int font_size = 4 * bounds.size.h / 7;
@@ -121,6 +126,17 @@ void update_clock_area_layer(Layer *l, GContext* ctx) {
   fctx_set_offset(&fctx, time_pos);
   fctx_draw_string(&fctx, time_minutes, minutes_font, GTextAlignmentCenter, FTextAnchorBaseline);
   fctx_end_fill(&fctx);
+
+  if (timer_running_full) {
+    graphics_context_set_stroke_width(ctx, 2);
+    graphics_context_set_stroke_color(ctx, GColorBlack);
+    graphics_draw_line(ctx, GPoint(0, bounds.size.h), GPoint(bounds.size.w, bounds.size.h));
+
+    graphics_context_set_text_color(ctx, GColorBlack);
+    graphics_draw_text(ctx, timer_get_text(), fonts_get_system_font(FONT_KEY_GOTHIC_28), 
+      GRect(0, bounds.size.h + 4, bounds.size.w - ACTION_BAR_WIDTH, 44), GTextOverflowModeTrailingEllipsis,
+      GTextAlignmentCenter, NULL);
+  }
 
   fctx_deinit_context(&fctx);
 }

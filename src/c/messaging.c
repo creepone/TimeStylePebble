@@ -2,6 +2,7 @@
 #include "weather.h"
 #include "settings.h"
 #include "messaging.h"
+#include "timer.h"
 
 void (*message_processed_callback)(void);
 
@@ -190,6 +191,11 @@ void inbox_received_callback(DictionaryIterator *iterator, void *context) {
 
   // save the new settings to persistent storage
   Settings_saveToStorage();
+  
+  Tuple *timerNextTimestamp_tuple = dict_find(iterator, MESSAGE_KEY_TimerNextTimestamp);
+  if (timerNextTimestamp_tuple != NULL) {
+    timer_set_next_timestamp(timerNextTimestamp_tuple->value->uint32);
+  }
 
   // notify the main screen, in case something changed
   message_processed_callback();

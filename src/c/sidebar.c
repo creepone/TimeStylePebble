@@ -6,6 +6,7 @@
 #include "languages.h"
 #include "sidebar.h"
 #include "sidebar_widgets.h"
+#include "timer.h"
 
 #define V_PADDING_DEFAULT 8
 #define V_PADDING_COMPACT 4
@@ -263,6 +264,17 @@ void updateRectSidebar(Layer *l, GContext* ctx) {
     }
   }
 
+  // todo: set these based on whether timer is running and whether we are obscured
+  bool timer_running_compact = timer_is_running() && bounds.size.h < 130;
+  bool timer_running_full = timer_is_running() && bounds.size.h >= 130;
+
+  if (timer_running_compact) {
+    displayWidgets[0] = getSidebarWidgetByType(TIMER);
+  } else if (timer_running_full) {
+    displayWidgets[1] = displayWidgets[2];
+    displayWidgets[2] = getSidebarWidgetByType(TIMER);
+  }
+
   // if the widgets are too tall, enable "compact mode"
   int compact_mode_threshold = bounds.size.h - V_PADDING_DEFAULT * 2 - 3;
   int v_padding = V_PADDING_DEFAULT;
@@ -287,6 +299,13 @@ void updateRectSidebar(Layer *l, GContext* ctx) {
   // calculate the three widget positions
   int topWidgetPos = v_padding;
   int lowerWidgetPos = bounds.size.h - v_padding - displayWidgets[2].getHeight();
+
+  if (timer_running_compact) {
+    topWidgetPos = 0;
+    lowerWidgetPos -= v_padding;
+  } else if (timer_running_full) {
+    lowerWidgetPos += v_padding;
+  }
 
   // vertically center the middle widget using MATH
   int middleWidgetPos = ((lowerWidgetPos - displayWidgets[1].getHeight()) + (topWidgetPos + displayWidgets[0].getHeight())) / 2;

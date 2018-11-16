@@ -5,6 +5,7 @@
 #include "weather.h"
 #include "sidebar.h"
 #include "util.h"
+#include "timer.h"
 
 // windows and layers
 static Window* mainWindow;
@@ -36,14 +37,16 @@ void update_clock() {
   Sidebar_updateTime(timeInfo);
 }
 
-/* forces everything on screen to be redrawn -- perfect for keeping track of settings! */
-void redrawScreen() {
+void adjustTickFrequency() {
+  int remaining_seconds = timer_remaining_seconds();
+  bool shouldUpdateEverySecond = globalSettings.updateScreenEverySecond || 
+    (remaining_seconds > 0 && remaining_seconds < 600); 
 
   // check if the tick handler frequency should be changed
-  if(globalSettings.updateScreenEverySecond != updatingEverySecond) {
+  if(shouldUpdateEverySecond != updatingEverySecond) {
     tick_timer_service_unsubscribe();
 
-    if(globalSettings.updateScreenEverySecond) {
+    if(shouldUpdateEverySecond) {
       tick_timer_service_subscribe(SECOND_UNIT, tick_handler);
       updatingEverySecond = true;
     } else {
@@ -51,6 +54,11 @@ void redrawScreen() {
       updatingEverySecond = false;
     }
   }
+}
+
+/* forces everything on screen to be redrawn -- perfect for keeping track of settings! */
+void redrawScreen() {
+  adjustTickFrequency();
 
   window_set_background_color(mainWindow, globalSettings.timeBgColor);
 
@@ -104,6 +112,7 @@ void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
     }
   }
 
+  adjustTickFrequency();
   update_clock();
 
   // redraw all screen
