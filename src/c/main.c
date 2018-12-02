@@ -7,6 +7,8 @@
 #include "util.h"
 #include "timer.h"
 
+#define CONNECTED_KEY 101
+
 // windows and layers
 static Window* mainWindow;
 static Layer* windowLayer;
@@ -138,6 +140,7 @@ void bluetoothStateChanged(bool newConnectionState) {
   }
 
   isPhoneConnected = newConnectionState;
+  persist_write_bool(CONNECTED_KEY, newConnectionState);
 
   Sidebar_redraw();
 }
@@ -201,6 +204,7 @@ static void init() {
     updatingEverySecond = false;
   }
 
+  isPhoneConnected = persist_read_bool(CONNECTED_KEY);
   bool connected = bluetooth_connection_service_peek();
   bluetoothStateChanged(connected);
   bluetooth_connection_service_subscribe(bluetoothStateChanged);
