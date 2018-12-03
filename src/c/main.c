@@ -122,7 +122,7 @@ void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
   ClockArea_redraw();
 }
 
-void bluetoothStateChanged(bool newConnectionState) {
+void onBluetoothStateChanged(bool newConnectionState, bool initial) {
   // if the phone was connected but isn't anymore and the user has opted in,
   // trigger a vibration
   if(!quiet_time_is_active() && isPhoneConnected && !newConnectionState && globalSettings.btVibe) {
@@ -135,7 +135,7 @@ void bluetoothStateChanged(bool newConnectionState) {
   }
 
   // if the phone was disconnected and isn't anymore, update the data
-  if(!isPhoneConnected && newConnectionState) {
+  if(initial || (!isPhoneConnected && newConnectionState)) {
     messaging_requestNewWeatherData();
   }
 
@@ -143,6 +143,10 @@ void bluetoothStateChanged(bool newConnectionState) {
   persist_write_bool(CONNECTED_KEY, newConnectionState);
 
   Sidebar_redraw();
+}
+
+void bluetoothStateChanged(bool newConnectionState) {
+  onBluetoothStateChanged(newConnectionState, false /* initial */);
 }
 
 // force the sidebar to redraw any time the battery state changes
@@ -206,7 +210,7 @@ static void init() {
 
   isPhoneConnected = persist_read_bool(CONNECTED_KEY);
   bool connected = bluetooth_connection_service_peek();
-  bluetoothStateChanged(connected);
+  onBluetoothStateChanged(connected, true /* initial */);
   bluetooth_connection_service_subscribe(bluetoothStateChanged);
 
   // register with battery service
